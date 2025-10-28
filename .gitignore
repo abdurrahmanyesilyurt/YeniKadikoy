@@ -1,0 +1,28 @@
+# VS / Rider / VSCode
+.vs/
+.vscode/
+.idea/
+
+# Build çýktýlarý
+bin/
+obj/
+[Bb]uild/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+TestResults/
+
+# Kullanýcýya özel/IDE
+*.user
+*.suo
+*.userprefs
+*.rsuser
+
+# Yaygýn cache/log
+*.cache
+*.log
+*.tlog
+
+# ASP.NET Core
+wwwroot/lib/

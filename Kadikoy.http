@@ -1,0 +1,6 @@
+@Kadikoy_HostAddress = http://localhost:5003
+
+GET {{Kadikoy_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
