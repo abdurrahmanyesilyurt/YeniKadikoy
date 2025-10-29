@@ -32,7 +32,7 @@ public class GalleryController : ControllerBase
     /// <returns>Upload result with file URL</returns>
     [HttpPost("upload")]
     [RequestSizeLimit(10 * 1024 * 1024)] // 10 MB limit
-    public async Task<IActionResult> UploadPhoto([FromForm] IFormFile file)
+    public async Task<IActionResult> UploadPhoto(IFormFile file)
     {
         try
         {

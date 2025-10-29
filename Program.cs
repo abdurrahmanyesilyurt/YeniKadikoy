@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Kadikoy.Data;
+using Kadikoy.Filters;
 using Kadikoy.Interfaces;
 using Kadikoy.Models;
 using Kadikoy.Services;
@@ -65,11 +66,13 @@ builder.Services.AddScoped<IS3Service, S3Service>();
 
 builder.Services.AddControllers();
 
-// 4) Swagger (prod'da da a��k)
+// 4) Swagger (prod'da da açık)
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Kadikoy API", Version = "v1" });
+
+    // JWT Bearer Authentication
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "Bearer {token}",
@@ -88,6 +91,9 @@ builder.Services.AddSwaggerGen(c =>
             Array.Empty<string>()
         }
     });
+
+    // File Upload Support
+    c.OperationFilter<FileUploadOperationFilter>();
 });
 
 // 5) CORS (�imdilik geni�, sonra daralt)

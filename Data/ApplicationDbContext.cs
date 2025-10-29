@@ -12,9 +12,20 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     {
     }
 
+    // Haber tabloları
+    public DbSet<News> News { get; set; }
+    public DbSet<NewsMedia> NewsMedia { get; set; }
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+        // News - NewsMedia ilişkisi
+        builder.Entity<NewsMedia>()
+            .HasOne(nm => nm.News)
+            .WithMany(n => n.MediaFiles)
+            .HasForeignKey(nm => nm.NewsId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         // Seed roles
         builder.Entity<ApplicationRole>().HasData(

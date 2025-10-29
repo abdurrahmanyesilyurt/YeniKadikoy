@@ -3,6 +3,7 @@ using Amazon.S3.Model;
 using Amazon.S3.Transfer;
 using Kadikoy.DTOs;
 using Kadikoy.Interfaces;
+using Kadikoy.Models;
 
 namespace Kadikoy.Services;
 
@@ -193,6 +194,181 @@ public class S3Service : IS3Service
     {
         var region = _configuration["AWS:Region"] ?? "eu-north-1";
         return $"https://{_bucketName}.s3.{region}.amazonaws.com/{folder}{fileName}";
+    }
+
+    // Haber medya metodları
+    public string GetNewsFolderPath(SportType sportType)
+    {
+        return sportType switch
+        {
+            SportType.Hepsi => _configuration["AWS:S3:NewsFolders:Hepsi"] ?? "haberler/genel/",
+            SportType.Okculuk => _configuration["AWS:S3:NewsFolders:Okculuk"] ?? "haberler/okculuk/",
+            SportType.Basketbol => _configuration["AWS:S3:NewsFolders:Basketbol"] ?? "haberler/basketbol/",
+            SportType.Voleybol => _configuration["AWS:S3:NewsFolders:Voleybol"] ?? "haberler/voleybol/",
+            _ => _configuration["AWS:S3:NewsFolder"] ?? "haberler/"
+        };
+    }
+
+    public async Task<MediaUploadResponseDto> UploadNewsMediaAsync(IFormFile file, SportType sportType, MediaType mediaType)
+    {
+        try
+        {
+            // Validate file
+            if (file == null || file.Length == 0)
+            {
+                return new MediaUploadResponseDto
+                {
+                    Success = false,
+                    Message = "Dosya boş veya geçersiz"
+                };
+            }
+
+            // Medya türüne göre boyut ve uzantı kontrolü
+            var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            string[] allowedExtensions;
+            long maxFileSize;
+
+            if (mediaType == MediaType.Photo)
+            {
+                allowedExtensions = _configuration.GetSection("AWS:S3:AllowedImageExtensions").Get<string[]>()
+                    ?? new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+                var maxFileSizeMB = int.Parse(_configuration["AWS:S3:MaxFileSizeMB"] ?? "10");
+                maxFileSize = maxFileSizeMB * 1024 * 1024;
+            }
+            else // Video
+            {
+                allowedExtensions = _configuration.GetSection("AWS:S3:AllowedVideoExtensions").Get<string[]>()
+                    ?? new[] { ".mp4", ".mov", ".avi", ".webm" };
+                var maxVideoSizeMB = int.Parse(_configuration["AWS:S3:MaxVideoSizeMB"] ?? "100");
+                maxFileSize = maxVideoSizeMB * 1024 * 1024;
+            }
+
+            // Check file size
+            if (file.Length > maxFileSize)
+            {
+                return new MediaUploadResponseDto
+                {
+                    Success = false,
+                    Message = $"Dosya boyutu {maxFileSize / (1024 * 1024)} MB'dan büyük olamaz"
+                };
+            }
+
+            // Check file extension
+            if (!allowedExtensions.Contains(fileExtension))
+            {
+                return new MediaUploadResponseDto
+                {
+                    Success = false,
+                    Message = $"Sadece şu dosya formatları kabul edilir: {string.Join(", ", allowedExtensions)}"
+                };
+            }
+
+            // Klasör yolunu belirle
+            var folder = GetNewsFolderPath(sportType);
+
+            // Alt klasör ekle (photo veya video)
+            var subFolder = mediaType == MediaType.Photo ? "photos/" : "videos/";
+            folder = $"{folder}{subFolder}";
+
+            // Generate unique file name
+            var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
+            var key = $"{folder}{uniqueFileName}";
+
+            // Upload to S3
+            using var stream = file.OpenReadStream();
+            var uploadRequest = new TransferUtilityUploadRequest
+            {
+                InputStream = stream,
+                Key = key,
+                BucketName = _bucketName,
+                ContentType = file.ContentType,
+                CannedACL = S3CannedACL.PublicRead
+            };
+
+            var transferUtility = new TransferUtility(_s3Client);
+            await transferUtility.UploadAsync(uploadRequest);
+
+            var region = _configuration["AWS:Region"] ?? "eu-north-1";
+            var fileUrl = $"https://{_bucketName}.s3.{region}.amazonaws.com/{key}";
+
+            _logger.LogInformation("News media uploaded successfully: {FileName} to {Key}", file.FileName, key);
+
+            return new MediaUploadResponseDto
+            {
+                Success = true,
+                Message = "Medya başarıyla yüklendi",
+                FileName = uniqueFileName,
+                FileUrl = fileUrl,
+                FileSizeBytes = file.Length,
+                ContentType = file.ContentType,
+                UploadedAt = DateTime.UtcNow,
+                S3Key = key
+            };
+        }
+        catch (AmazonS3Exception ex)
+        {
+            _logger.LogError(ex, "AWS S3 error while uploading news media: {FileName}", file.FileName);
+            return new MediaUploadResponseDto
+            {
+                Success = false,
+                Message = $"S3 hatası: {ex.Message}"
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error uploading news media: {FileName}", file.FileName);
+            return new MediaUploadResponseDto
+            {
+                Success = false,
+                Message = $"Medya yüklenirken hata oluştu: {ex.Message}"
+            };
+        }
+    }
+
+    public async Task<MediaDeleteResponseDto> DeleteNewsMediaAsync(string s3Key)
+    {
+        try
+        {
+            var deleteRequest = new DeleteObjectRequest
+            {
+                BucketName = _bucketName,
+                Key = s3Key
+            };
+
+            await _s3Client.DeleteObjectAsync(deleteRequest);
+
+            _logger.LogInformation("News media deleted successfully: {Key}", s3Key);
+
+            return new MediaDeleteResponseDto
+            {
+                Success = true,
+                Message = "Medya başarıyla silindi",
+                FileName = Path.GetFileName(s3Key),
+                DeletedAt = DateTime.UtcNow
+            };
+        }
+        catch (AmazonS3Exception ex)
+        {
+            _logger.LogError(ex, "AWS S3 error while deleting news media: {Key}", s3Key);
+            return new MediaDeleteResponseDto
+            {
+                Success = false,
+                Message = $"S3 hatası: {ex.Message}",
+                FileName = Path.GetFileName(s3Key),
+                DeletedAt = DateTime.UtcNow
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting news media: {Key}", s3Key);
+            return new MediaDeleteResponseDto
+            {
+                Success = false,
+                Message = $"Medya silinirken hata oluştu: {ex.Message}",
+                FileName = Path.GetFileName(s3Key),
+                DeletedAt = DateTime.UtcNow
+            };
+        }
     }
 }
 

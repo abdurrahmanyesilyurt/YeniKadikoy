@@ -9,5 +9,6 @@ public class MediaUploadResponseDto
     public long? FileSizeBytes { get; set; }
     public string? ContentType { get; set; }
     public DateTime UploadedAt { get; set; }
+    public string? S3Key { get; set; }
 }
 

@@ -3,7 +3,7 @@
 .vscode/
 .idea/
 
-# Build çýktýlarý
+# Build ï¿½ï¿½ktï¿½larï¿½
 bin/
 obj/
 [Bb]uild/
@@ -13,16 +13,19 @@ x64/
 x86/
 TestResults/
 
-# Kullanýcýya özel/IDE
+# Kullanï¿½cï¿½ya ï¿½zel/IDE
 *.user
 *.suo
 *.userprefs
 *.rsuser
 
-# Yaygýn cache/log
+# Yaygï¿½n cache/log
 *.cache
 *.log
 *.tlog
 
 # ASP.NET Core
 wwwroot/lib/
+
+# Publish klasÃ¶rÃ¼
+publish/
