@@ -16,6 +16,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<News> News { get; set; }
     public DbSet<NewsMedia> NewsMedia { get; set; }
 
+    // Sponsor table
+    public DbSet<Sponsor> Sponsors { get; set; }
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
