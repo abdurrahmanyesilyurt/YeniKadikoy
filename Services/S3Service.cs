@@ -77,7 +77,7 @@ public class S3Service : IS3Service
                 Key = key,
                 BucketName = _bucketName,
                 ContentType = file.ContentType,
-                CannedACL = S3CannedACL.PublicRead // Make file publicly accessible
+                // Note: ACLs are disabled (Bucket owner enforced). Do not set CannedACL here.
             };
 
             var transferUtility = new TransferUtility(_s3Client);
@@ -282,7 +282,7 @@ public class S3Service : IS3Service
                 Key = key,
                 BucketName = _bucketName,
                 ContentType = file.ContentType,
-                CannedACL = S3CannedACL.PublicRead
+                // Note: ACLs are disabled (Bucket owner enforced). Do not set CannedACL here.
             };
 
             var transferUtility = new TransferUtility(_s3Client);

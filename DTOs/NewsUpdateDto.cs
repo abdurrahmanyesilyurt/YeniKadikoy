@@ -26,10 +26,16 @@ public class NewsUpdateDto
     public SportType? SportType { get; set; }
     
     /// <summary>
+    /// Haber tipi (0=Bilgilendirme, 1=SkorTakibi, 2=OzelGun)
+    /// </summary>
+    [Range(0, 2, ErrorMessage = "Geçerli bir haber tipi seçiniz (0-2)")]
+    public NewsType? NewsType { get; set; }
+
+    /// <summary>
     /// Yayınlanma tarihi
     /// </summary>
     public DateTime? PublishedAt { get; set; }
-    
+
     /// <summary>
     /// Aktif mi?
     /// </summary>

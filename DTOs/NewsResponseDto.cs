@@ -12,6 +12,8 @@ public class NewsResponseDto
     public string Content { get; set; } = string.Empty;
     public SportType SportType { get; set; }
     public string SportTypeName { get; set; } = string.Empty;
+    public NewsType NewsType { get; set; }
+    public string NewsTypeName { get; set; } = string.Empty;
     public DateTime PublishedAt { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }

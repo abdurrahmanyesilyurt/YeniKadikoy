@@ -27,7 +27,14 @@ public class NewsCreateDto
     [Required(ErrorMessage = "Spor dalı zorunludur")]
     [Range(0, 3, ErrorMessage = "Geçerli bir spor dalı seçiniz (0-3)")]
     public SportType SportType { get; set; }
-    
+
+    /// <summary>
+    /// Haber tipi (0=Bilgilendirme, 1=SkorTakibi, 2=OzelGun)
+    /// </summary>
+    [Required(ErrorMessage = "Haber tipi zorunludur")]
+    [Range(0, 2, ErrorMessage = "Geçerli bir haber tipi seçiniz (0-2)")]
+    public NewsType NewsType { get; set; } = NewsType.Bilgilendirme;
+
     /// <summary>
     /// Yayınlanma tarihi (opsiyonel, belirtilmezse şu an)
     /// </summary>

@@ -28,7 +28,13 @@ public class News
     /// </summary>
     [Required]
     public SportType SportType { get; set; }
-    
+
+    /// <summary>
+    /// Haber tipi (0=Bilgilendirme, 1=SkorTakibi, 2=OzelGun)
+    /// </summary>
+    [Required]
+    public NewsType NewsType { get; set; } = NewsType.Bilgilendirme;
+
     /// <summary>
     /// Haberin yayınlanma tarihi
     /// </summary>

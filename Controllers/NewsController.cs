@@ -30,12 +30,14 @@ public class NewsController : ControllerBase
     /// Tüm haberleri listele (filtreleme ile)
     /// </summary>
     /// <param name="sportType">Spor dalı filtresi (opsiyonel)</param>
+    /// <param name="newsType">Haber tipi filtresi (opsiyonel)</param>
     /// <param name="isActive">Aktif/pasif filtresi (opsiyonel)</param>
     /// <param name="pageNumber">Sayfa numarası (varsayılan: 1)</param>
     /// <param name="pageSize">Sayfa boyutu (varsayılan: 10)</param>
     [HttpGet]
     public async Task<ActionResult<object>> GetNews(
         [FromQuery] SportType? sportType = null,
+        [FromQuery] NewsType? newsType = null,
         [FromQuery] bool? isActive = null,
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10)
@@ -50,6 +52,11 @@ public class NewsController : ControllerBase
             if (sportType.HasValue)
             {
                 query = query.Where(n => n.SportType == sportType.Value);
+            }
+
+            if (newsType.HasValue)
+            {
+                query = query.Where(n => n.NewsType == newsType.Value);
             }
 
             if (isActive.HasValue)
@@ -127,6 +134,7 @@ public class NewsController : ControllerBase
                 Title = dto.Title,
                 Content = dto.Content,
                 SportType = dto.SportType,
+                NewsType = dto.NewsType,
                 PublishedAt = dto.PublishedAt ?? DateTime.UtcNow,
                 IsActive = dto.IsActive,
                 CreatedAt = DateTime.UtcNow
@@ -170,6 +178,9 @@ public class NewsController : ControllerBase
 
             if (dto.SportType.HasValue)
                 news.SportType = dto.SportType.Value;
+
+            if (dto.NewsType.HasValue)
+                news.NewsType = dto.NewsType.Value;
 
             if (dto.PublishedAt.HasValue)
                 news.PublishedAt = dto.PublishedAt.Value;
@@ -239,13 +250,12 @@ public class NewsController : ControllerBase
     /// Habere medya ekle (fotoğraf veya video)
     /// </summary>
     [HttpPost("{id}/media")]
+    [Consumes("multipart/form-data")]
     [Authorize(Roles = "Admin,PhotoUploader")]
     [RequestSizeLimit(100 * 1024 * 1024)] // 100 MB limit (videolar için)
     public async Task<ActionResult<NewsMediaUploadResponseDto>> UploadNewsMedia(
         int id,
-        [FromForm] IFormFile file,
-        [FromForm] int mediaType = 0,
-        [FromForm] int order = 0)
+        [FromForm] NewsMediaFormDto form)
     {
         try
         {
@@ -255,10 +265,10 @@ public class NewsController : ControllerBase
                 return NotFound(new { message = "Haber bulunamadı" });
             }
 
-            var mediaTypeEnum = (MediaType)mediaType;
-            
+            var mediaTypeEnum = (MediaType)form.MediaType;
+
             // S3'e yükle
-            var uploadResult = await _s3Service.UploadNewsMediaAsync(file, news.SportType, mediaTypeEnum);
+            var uploadResult = await _s3Service.UploadNewsMediaAsync(form.File, news.SportType, mediaTypeEnum);
 
             if (!uploadResult.Success)
             {
@@ -276,9 +286,9 @@ public class NewsController : ControllerBase
                 MediaType = mediaTypeEnum,
                 S3Key = uploadResult.S3Key!,
                 S3Url = uploadResult.FileUrl!,
-                FileName = file.FileName,
-                FileSize = file.Length,
-                Order = order,
+                FileName = form.File.FileName,
+                FileSize = form.File.Length,
+                Order = form.Order,
                 UploadedAt = DateTime.UtcNow
             };
 
@@ -363,6 +373,8 @@ public class NewsController : ControllerBase
             Content = news.Content,
             SportType = news.SportType,
             SportTypeName = news.SportType.ToString(),
+            NewsType = news.NewsType,
+            NewsTypeName = news.NewsType.ToString(),
             PublishedAt = news.PublishedAt,
             CreatedAt = news.CreatedAt,
             UpdatedAt = news.UpdatedAt,
