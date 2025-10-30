@@ -362,6 +362,44 @@ public class NewsController : ControllerBase
             return StatusCode(500, new { message = "Medya silinirken hata oluştu" });
         }
     }
+    /// <summary>
+    /// Fotoğraf sayıları (toplam ve spor dalına göre)
+    /// </summary>
+    [HttpGet("media/photo-stats")]
+    [Authorize(Roles = "Admin,PhotoUploader")]
+    public async Task<ActionResult<PhotoStatsResponseDto>> GetPhotoStats()
+    {
+        try
+        {
+            var query = _context.NewsMedia
+                .Include(nm => nm.News)
+                .Where(nm => nm.MediaType == MediaType.Photo);
+
+            var grouped = await query
+                .GroupBy(nm => nm.News!.SportType)
+                .Select(g => new { SportType = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            int okculuk = grouped.FirstOrDefault(x => x.SportType == SportType.Okculuk)?.Count ?? 0;
+            int basketbol = grouped.FirstOrDefault(x => x.SportType == SportType.Basketbol)?.Count ?? 0;
+            int voleybol = grouped.FirstOrDefault(x => x.SportType == SportType.Voleybol)?.Count ?? 0;
+            int total = await query.CountAsync();
+
+            return Ok(new PhotoStatsResponseDto
+            {
+                Total = total,
+                Okculuk = okculuk,
+                Basketbol = basketbol,
+                Voleybol = voleybol
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting photo stats");
+            return StatusCode(500, new { message = "Fotoğraf istatistikleri getirilirken hata oluştu" });
+        }
+    }
+
 
     // Helper method
     private NewsResponseDto MapToResponseDto(News news)

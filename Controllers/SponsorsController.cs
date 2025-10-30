@@ -203,18 +203,18 @@ public class SponsorsController : ControllerBase
     [Consumes("multipart/form-data")]
     [Authorize(Roles = "Admin,PhotoUploader")]
     [RequestSizeLimit(10 * 1024 * 1024)] // 10 MB
-    public async Task<ActionResult<SponsorResponseDto>> UploadPhoto(int id, [FromForm] IFormFile file)
+    public async Task<ActionResult<SponsorResponseDto>> UploadPhoto(int id, [FromForm] SponsorMediaFormDto form)
     {
         try
         {
-            if (file == null)
+            if (form?.File == null)
                 return BadRequest(new { message = "Dosya seçilmedi" });
 
             var sponsor = await _context.Sponsors.FindAsync(id);
             if (sponsor == null)
                 return NotFound(new { message = "Sponsor bulunamadı" });
 
-            var result = await _s3Service.UploadFileAsync(file, "sponsors/photos/");
+            var result = await _s3Service.UploadFileAsync(form.File, "sponsors/photos/");
             if (!result.Success)
                 return BadRequest(new { message = result.Message });
 
@@ -222,7 +222,7 @@ public class SponsorsController : ControllerBase
             sponsor.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("Sponsor photo uploaded: {Id} - {FileName}", id, file.FileName);
+            _logger.LogInformation("Sponsor photo uploaded: {Id} - {FileName}", id, form.File.FileName);
 
             return Ok(MapToResponseDto(sponsor));
         }
@@ -240,18 +240,18 @@ public class SponsorsController : ControllerBase
     [Consumes("multipart/form-data")]
     [Authorize(Roles = "Admin,PhotoUploader")]
     [RequestSizeLimit(10 * 1024 * 1024)] // 10 MB
-    public async Task<ActionResult<SponsorResponseDto>> UploadLogo(int id, [FromForm] IFormFile file)
+    public async Task<ActionResult<SponsorResponseDto>> UploadLogo(int id, [FromForm] SponsorMediaFormDto form)
     {
         try
         {
-            if (file == null)
+            if (form?.File == null)
                 return BadRequest(new { message = "Dosya seçilmedi" });
 
             var sponsor = await _context.Sponsors.FindAsync(id);
             if (sponsor == null)
                 return NotFound(new { message = "Sponsor bulunamadı" });
 
-            var result = await _s3Service.UploadFileAsync(file, "sponsors/logos/");
+            var result = await _s3Service.UploadFileAsync(form.File, "sponsors/logos/");
             if (!result.Success)
                 return BadRequest(new { message = result.Message });
 
@@ -259,7 +259,7 @@ public class SponsorsController : ControllerBase
             sponsor.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("Sponsor logo uploaded: {Id} - {FileName}", id, file.FileName);
+            _logger.LogInformation("Sponsor logo uploaded: {Id} - {FileName}", id, form.File.FileName);
 
             return Ok(MapToResponseDto(sponsor));
         }
@@ -269,6 +269,43 @@ public class SponsorsController : ControllerBase
             return StatusCode(500, new { message = "Logo yüklenirken hata oluştu" });
         }
     }
+    /// <summary>
+    /// Sponsor sayıları (toplam ve spor dalına göre)
+    /// </summary>
+    [HttpGet("stats")]
+    [Authorize(Roles = "Admin,PhotoUploader")]
+    public async Task<ActionResult<SponsorStatsResponseDto>> GetSponsorStats()
+    {
+        try
+        {
+            var query = _context.Sponsors.AsQueryable();
+
+            var grouped = await query
+                .Where(s => s.SportType != null)
+                .GroupBy(s => s.SportType!.Value)
+                .Select(g => new { SportType = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            int okculuk = grouped.FirstOrDefault(x => x.SportType == SportType.Okculuk)?.Count ?? 0;
+            int basketbol = grouped.FirstOrDefault(x => x.SportType == SportType.Basketbol)?.Count ?? 0;
+            int voleybol = grouped.FirstOrDefault(x => x.SportType == SportType.Voleybol)?.Count ?? 0;
+            int total = await query.CountAsync();
+
+            return Ok(new SponsorStatsResponseDto
+            {
+                Total = total,
+                Okculuk = okculuk,
+                Basketbol = basketbol,
+                Voleybol = voleybol
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting sponsor stats");
+            return StatusCode(500, new { message = "Sponsor istatistikleri getirilirken hata oluştu" });
+        }
+    }
+
 
     private SponsorResponseDto MapToResponseDto(Sponsor s) => new SponsorResponseDto
     {
