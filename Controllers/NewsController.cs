@@ -362,6 +362,106 @@ public class NewsController : ControllerBase
         }
     }
     /// <summary>
+    /// Sosyal Sorumluluk haberi için fotoğraf yükle
+    /// </summary>
+    [HttpPost("social-responsibility/{id}/photo")]
+    [Consumes("multipart/form-data")]
+    [Authorize(Roles = "Admin,PhotoUploader")]
+    [RequestSizeLimit(10 * 1024 * 1024)] // 10 MB limit for photos
+    public async Task<ActionResult<NewsMediaUploadResponseDto>> UploadSocialResponsibilityPhoto(
+        int id,
+        [FromForm] IFormFile file,
+        [FromForm] int order = 0)
+    {
+        try
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest(new NewsMediaUploadResponseDto
+                {
+                    Success = false,
+                    Message = "Dosya seçilmedi"
+                });
+            }
+
+            var news = await _context.News.FindAsync(id);
+            if (news == null)
+            {
+                return NotFound(new NewsMediaUploadResponseDto
+                {
+                    Success = false,
+                    Message = "Haber bulunamadı"
+                });
+            }
+
+            // Verify that the news item is of type SocialResponsibility
+            if (news.NewsType != NewsType.SosyalSorumluluk)
+            {
+                return BadRequest(new NewsMediaUploadResponseDto
+                {
+                    Success = false,
+                    Message = "Bu haber Sosyal Sorumluluk türünde değildir"
+                });
+            }
+
+            // S3'e yükle (Photo type only)
+            var uploadResult = await _s3Service.UploadNewsMediaAsync(file, news.SportType, MediaType.Photo);
+
+            if (!uploadResult.Success)
+            {
+                return BadRequest(new NewsMediaUploadResponseDto
+                {
+                    Success = false,
+                    Message = uploadResult.Message
+                });
+            }
+
+            // Veritabanına kaydet
+            var newsMedia = new NewsMedia
+            {
+                NewsId = id,
+                MediaType = MediaType.Photo,
+                S3Key = uploadResult.S3Key!,
+                S3Url = uploadResult.FileUrl!,
+                FileName = file.FileName,
+                FileSize = file.Length,
+                Order = order,
+                UploadedAt = DateTime.UtcNow
+            };
+
+            _context.NewsMedia.Add(newsMedia);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Social Responsibility photo uploaded for news {NewsId}: {MediaId}", id, newsMedia.Id);
+
+            return Ok(new NewsMediaUploadResponseDto
+            {
+                Success = true,
+                Message = "Fotoğraf başarıyla yüklendi",
+                Media = new NewsMediaResponseDto
+                {
+                    Id = newsMedia.Id,
+                    MediaType = newsMedia.MediaType,
+                    S3Url = newsMedia.S3Url,
+                    FileName = newsMedia.FileName,
+                    FileSize = newsMedia.FileSize,
+                    Order = newsMedia.Order,
+                    UploadedAt = newsMedia.UploadedAt
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error uploading social responsibility photo for news: {Id}", id);
+            return StatusCode(500, new NewsMediaUploadResponseDto
+            {
+                Success = false,
+                Message = "Fotoğraf yüklenirken hata oluştu"
+            });
+        }
+    }
+
+    /// <summary>
     /// Fotoğraf sayıları (toplam ve spor dalına göre)
     /// </summary>
     [HttpGet("media/photo-stats")]

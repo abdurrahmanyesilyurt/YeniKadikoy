@@ -6,6 +6,7 @@ public enum NewsType
 {
     Bilgilendirme = 0,
     SkorTakibi = 1,
-    OzelGun = 2
+    OzelGun = 2,
+    SosyalSorumluluk = 3
 }
 
