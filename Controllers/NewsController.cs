@@ -305,7 +305,6 @@ public class NewsController : ControllerBase
                 {
                     Id = newsMedia.Id,
                     MediaType = newsMedia.MediaType,
-                    MediaTypeName = newsMedia.MediaType.ToString(),
                     S3Url = newsMedia.S3Url,
                     FileName = newsMedia.FileName,
                     FileSize = newsMedia.FileSize,
@@ -410,9 +409,7 @@ public class NewsController : ControllerBase
             Title = news.Title,
             Content = news.Content,
             SportType = news.SportType,
-            SportTypeName = news.SportType.ToString(),
             NewsType = news.NewsType,
-            NewsTypeName = news.NewsType.ToString(),
             PublishedAt = news.PublishedAt,
             CreatedAt = news.CreatedAt,
             UpdatedAt = news.UpdatedAt,
@@ -421,7 +418,6 @@ public class NewsController : ControllerBase
             {
                 Id = m.Id,
                 MediaType = m.MediaType,
-                MediaTypeName = m.MediaType.ToString(),
                 S3Url = m.S3Url,
                 FileName = m.FileName,
                 FileSize = m.FileSize,

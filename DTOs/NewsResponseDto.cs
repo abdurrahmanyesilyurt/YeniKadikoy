@@ -11,9 +11,7 @@ public class NewsResponseDto
     public string Title { get; set; } = string.Empty;
     public string Content { get; set; } = string.Empty;
     public SportType SportType { get; set; }
-    public string SportTypeName { get; set; } = string.Empty;
     public NewsType NewsType { get; set; }
-    public string NewsTypeName { get; set; } = string.Empty;
     public DateTime PublishedAt { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
@@ -28,7 +26,6 @@ public class NewsMediaResponseDto
 {
     public int Id { get; set; }
     public MediaType MediaType { get; set; }
-    public string MediaTypeName { get; set; } = string.Empty;
     public string S3Url { get; set; } = string.Empty;
     public string? FileName { get; set; }
     public long FileSize { get; set; }

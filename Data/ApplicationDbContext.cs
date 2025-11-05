@@ -19,6 +19,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     // Sponsor table
     public DbSet<Sponsor> Sponsors { get; set; }
 
+    // Galeri tablosu
+    public DbSet<Gallery> Galleries { get; set; }
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);

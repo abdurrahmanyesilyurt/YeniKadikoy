@@ -3,6 +3,7 @@ using System;
 using Kadikoy.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Kadikoy.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251030213348_AddGallery")]
+    partial class AddGallery
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -151,17 +154,17 @@ namespace Kadikoy.Migrations
                         {
                             Id = 1,
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "29e7bbea-ec3a-4e43-aecf-9f0af9feffd4",
-                            CreatedAt = new DateTime(2025, 10, 30, 21, 39, 30, 641, DateTimeKind.Utc).AddTicks(5616),
+                            ConcurrencyStamp = "97d38ccc-ab79-47fb-a18d-03ac6566c4e2",
+                            CreatedAt = new DateTime(2025, 10, 30, 21, 33, 47, 237, DateTimeKind.Utc).AddTicks(2746),
                             Email = "admin@kadikoy.com",
                             EmailConfirmed = true,
                             FullName = "System Administrator",
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@KADIKOY.COM",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEM32BH4Fiy9qCtWUfnHGg88D4nyA/IHE+AP5dBnzawFuwuFW8EeOiOUkX1JnMEyKPA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEFIkXWMGPHD71xkhOX6zxRa9caOWHRkOY0pAoZXydf0WOucFAGug7IPnTsn64epknQ==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "511d78a2-25cd-412b-a116-28da3bb03459",
+                            SecurityStamp = "6b61f33c-9858-4aad-9d4b-3077a403eb1d",
                             TwoFactorEnabled = false,
                             UserName = "admin"
                         });
@@ -185,10 +188,6 @@ namespace Kadikoy.Migrations
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
 
                     b.Property<int>("Order")
                         .HasColumnType("integer");
