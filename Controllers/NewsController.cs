@@ -370,12 +370,11 @@ public class NewsController : ControllerBase
     [RequestSizeLimit(10 * 1024 * 1024)] // 10 MB limit for photos
     public async Task<ActionResult<NewsMediaUploadResponseDto>> UploadSocialResponsibilityPhoto(
         int id,
-        [FromForm] IFormFile file,
-        [FromForm] int order = 0)
+        [FromForm] SocialResponsibilityPhotoFormDto form)
     {
         try
         {
-            if (file == null || file.Length == 0)
+            if (form?.File == null || form.File.Length == 0)
             {
                 return BadRequest(new NewsMediaUploadResponseDto
                 {
@@ -405,7 +404,7 @@ public class NewsController : ControllerBase
             }
 
             // S3'e yükle (Photo type only)
-            var uploadResult = await _s3Service.UploadNewsMediaAsync(file, news.SportType, MediaType.Photo);
+            var uploadResult = await _s3Service.UploadNewsMediaAsync(form.File, news.SportType, MediaType.Photo);
 
             if (!uploadResult.Success)
             {
@@ -423,9 +422,9 @@ public class NewsController : ControllerBase
                 MediaType = MediaType.Photo,
                 S3Key = uploadResult.S3Key!,
                 S3Url = uploadResult.FileUrl!,
-                FileName = file.FileName,
-                FileSize = file.Length,
-                Order = order,
+                FileName = form.File.FileName,
+                FileSize = form.File.Length,
+                Order = form.Order,
                 UploadedAt = DateTime.UtcNow
             };
 

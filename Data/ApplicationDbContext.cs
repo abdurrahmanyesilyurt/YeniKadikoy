@@ -22,6 +22,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     // Galeri tablosu
     public DbSet<Gallery> Galleries { get; set; }
 
+    // Sporcu kayıt tablosu
+    public DbSet<Registration> Registrations { get; set; }
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
